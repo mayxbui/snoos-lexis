@@ -12,10 +12,11 @@ export interface GameState {
   letters: string[];                    // 6 available letters [c, a, t, h, e, r]
   selectedLetters: string[];            // Currently selected letters (max 6)
   foundWords: FoundWord[];              // Array of words found so far
-  timer: number;                        // Seconds remaining (60 → 0)
+  timer: number;                        // Seconds remaining (120 → 0)
   isGameActive: boolean;                // true while playing, false when game over
   score: number;                        // Total points accumulated
 }
+
 
 export interface FoundWord {
   word: string;                         // The word (e.g., "hate")
