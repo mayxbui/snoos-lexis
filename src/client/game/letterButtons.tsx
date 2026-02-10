@@ -1,7 +1,5 @@
 // src/client/game/LetterButtons.tsx
-
 import React, { useMemo } from "react";
-// import "./LetterButtons.css";
 
 interface LetterButtonsProps {
   letters: string[];                  // Array of 6 available letters
@@ -14,7 +12,6 @@ interface LetterButtonsProps {
  * Source: 40,000-word frequency sample
  * Rarer letters = higher points
  */
-
 const SCRABBLE_VALUES: Record<string, number> = {
   // Very common (≥ 7%)
   e: 1, t: 1, a: 1, o: 1, i: 1, n: 1,
@@ -56,7 +53,6 @@ export const LetterButtons: React.FC<LetterButtonsProps> = ({
         return (
           <button
             key={`${letter}-${index}`}
-            className={`lb-tile ${selected ? "is-selected" : ""}`}
             onClick={() => handleLetterClick(letter)}
             disabled={selected}
             type="button"
@@ -64,20 +60,58 @@ export const LetterButtons: React.FC<LetterButtonsProps> = ({
             aria-label={`Letter ${letter.toUpperCase()} worth ${value} points${
               selected ? " (selected)" : ""
             }`}
-            title={selected ? `${letter.toUpperCase()} already selected` : `Select ${letter.toUpperCase()}`}
+            title={
+              selected
+                ? `${letter.toUpperCase()} already selected`
+                : `Select ${letter.toUpperCase()}`
+            }
+            className={[
+              // size + layout
+              "relative h-20 w-20 md:h-24 md:w-24",
+              "flex items-center justify-center",
+              // tile look (dark square w/ thick shadow)
+              "bg-lexisDark border-2 border-black",
+              "shadow-[0_6px_0_0_rgba(0,0,0,1)]",
+              // text styling
+              "text-lexisGold font-bold text-5xl md:text-6xl leading-none",
+              // interaction
+              "transition-transform duration-150",
+              "hover:-translate-y-0.5 active:translate-y-0",
+              "focus:outline-none focus-visible:ring-4 focus-visible:ring-black/30",
+              // disabled state
+              selected ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
+            ].join(" ")}
           >
-            <span className="lb-letter">{letter.toUpperCase()}</span>
-            <span className="lb-value">{value}</span>
-            {selected && <span className="lb-check" aria-hidden="true">✓</span>}
+            {/* Main letter */}
+            <span>{letter.toUpperCase()}</span>
+
+            {/* Point value (bottom-right) */}
+            <span className="absolute bottom-1 right-2 text-xs md:text-sm font-semibold opacity-90">
+              {value}
+            </span>
+
+            {/* Checkmark when selected (top-right) */}
+            {selected && (
+              <span
+                className="absolute top-1 right-2 text-xl font-extrabold text-[#7ddc7d]"
+                aria-hidden="true"
+              >
+                ✓
+              </span>
+            )}
           </button>
         );
       }),
-    [letters, selectedLetters]
+    [letters, selectedLetters, onSelectLetter]
   );
 
   return (
-    <div className="lb-wrap">
-      <div className="lb-row" role="group" aria-label="Letter buttons">
+    <div className="w-full flex justify-center">
+      <div
+        className="grid grid-cols-6 gap-4 md:gap-5"
+        role="group"
+        aria-label="Letter buttons"
+      >
         {letterElements}
       </div>
     </div>
