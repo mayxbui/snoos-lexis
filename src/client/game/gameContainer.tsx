@@ -3,7 +3,9 @@ import {GameState} from "../../shared/types/types";
 import WordGrid from "./wordGrid";
 import LetterButtons from "./letterButtons";
 import ControlButtons from "./controlButtons";
+import ResultPage from "./resultPage";
 import Timer from "./timer";
+
 
 /**
  * Game Container
@@ -90,12 +92,7 @@ export const GameContainer: React.FC<ContainerProps>=({
       {!gameState.isGameActive && (
         <div className="game-over-overlay">
           <div className="result-page">
-            <h2>Snoo's Lexi #{dayNumber}</h2>
-            <p>Final Score: {gameState.score}</p>
-            <p>You found <strong>{gameState.foundWords.length}/{isPossible}</strong> of {numberOfWords} words.</p>
-            {gameState.foundWords.length===isPossible && (
-              <p className="perfect-score">You're on fire!</p>
-            )}
+            {ResultPage}
           </div>
         </div>
       )}

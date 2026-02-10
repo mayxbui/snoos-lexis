@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ReactComponent as SnoosLexisTitle } from '../../../assets';
-import { ReactComponent as PlayButton } from '../../../assets';
+import { ReactComponent as SnoosLexisTitle } from '../../../assets/logo.svg';
+import { ReactComponent as PlayButton } from '../../../assets/play-button.svg';
 
 const StarterPage: React.FC = () => {
   const [gameStarted, setGameStarted] = useState(false); // State to track game start
