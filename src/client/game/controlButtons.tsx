@@ -1,7 +1,7 @@
 // submit, shuffle, delete
 // src/client/game/GameBoard.tsx
 import React, { useMemo, useState } from "react";
-import LetterButtons from "./LetterButtons";
+import LetterButtons from "./letterButtons";
 // import "./GameBoard.css";
 
 type SubmitResult =
