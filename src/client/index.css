@@ -1,1 +1,21 @@
 @import 'tailwindcss';
+@import url('https://fonts.googleapis.com/css2?family=Original+Surfer&display=swap');
+
+:root {
+    --color-primary: #F9ED9B;
+
+    --color-secondary: #504E42;
+
+    --color-background: #F6F3E2;
+
+    --color-text-light:#F6F3E2;
+    --color-text-dark: #504E42;
+
+    --font: 'Original Surfer', sans-serif;
+}
+
+html body {
+    width: 100% !important;
+    margin: 0 auto;
+    padding: 0;
+}
