@@ -1,12 +1,6 @@
-// submit, shuffle, delete
 // src/client/game/GameBoard.tsx
 import React, { useMemo, useState } from "react";
-<<<<<<< HEAD
-import LetterButtons from "./letterButtons";
-// import "./GameBoard.css";
-=======
-import LetterButtons from "./LetterButtons";
->>>>>>> e415ba063dabc9df9d094c2ad7890b19448f3eb5
+import {LetterButtons} from "./letterButtons";
 
 type SubmitResult = { ok: true } | { ok: false; message: string };
 
@@ -14,7 +8,7 @@ const shuffleArray = (arr: string[]) => {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
+    [copy[i]!, copy[j]!] = [copy[j]!, copy[i]!];
   }
   return copy;
 };
