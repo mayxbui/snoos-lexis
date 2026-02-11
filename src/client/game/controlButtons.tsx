@@ -1,4 +1,4 @@
-// src/client/game/GameBoard.tsx
+// src/client/game/gameContainer.tsx
 import React, { useMemo, useState } from "react";
 import {LetterButtons} from "./letterButtons";
 
@@ -19,7 +19,7 @@ const validateWord = async (word: string): Promise<SubmitResult> => {
   return { ok: true };
 };
 
-export default function GameBoard() {
+export default function gameContainer() {
   const [letters, setLetters] = useState<string[]>(["f", "e", "i", "o", "r", "p"]);
   const [selectedLetters, setSelectedLetters] = useState<string[]>([]);
   const [foundWords, setFoundWords] = useState<string[]>([]);

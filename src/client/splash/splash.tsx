@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
-import { ReactComponent as SnoosLexisTitle } from '../../../assets/logo.svg';
-import { ReactComponent as PlayButton } from '../../../assets/play-button.svg';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import SnoosLexisTitle from '../public/title.png';
+import PlayButton from '../public/play-button.png';
+import { navigateTo } from '@devvit/web/client';
+import GameContainer from '../game/controlButtons';
 
-const StarterPage: React.FC = () => {
-  const [gameStarted, setGameStarted] = useState(false); // State to track game start
+const StarterPage = () => {
   const [showHowToPlay, setShowHowToPlay] = useState(false); // State to toggle how-to-play modal
 
   const handlePlayClick = () => {
-    setGameStarted(true); // Start the game when play is clicked
+    console.log("navigating to game")
+    navigateTo('/game'); // Start the game when play is clicked
   };
 
   const handleHowToPlayClick = () => {
@@ -20,34 +24,30 @@ const StarterPage: React.FC = () => {
 
   return (
     <div>
-      {!gameStarted ? (
-        <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
-          {/* Title */}
-          <div className="mb-8">
-            <SnoosLexisTitle className="w-72" />
-          </div>
-
-          {/* Play Button */}
-          <button 
-            className="bg-transparent border-none cursor-pointer mb-8"
-            onClick={handlePlayClick}
-          >
-            <PlayButton className="w-36" />
-          </button>
-
-          {/* How To Play Link */}
-          <div className="mt-4">
-            <button 
-              onClick={handleHowToPlayClick} 
-              className="text-xl text-gray-800 font-bold hover:text-yellow-500"
-            >
-              How To Play
-            </button>
-          </div>
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
+        {/* Title */}
+        <div className="mb-8">
+          <img src={SnoosLexisTitle} alt="Snoo's Lexis Title" className="w-72" />
         </div>
-      ) : (
-        <div> {/* Game container content goes here */} </div>
-      )}
+
+        {/* Play Button */}
+        <button 
+          className="bg-transparent border-none cursor-pointer mb-8"
+          onClick={handlePlayClick}
+        >
+          <img src={PlayButton} alt="Play Button" className="w-36" />
+        </button>
+
+        {/* How To Play Link */}
+        <div className="mt-4">
+          <button 
+            onClick={handleHowToPlayClick} 
+            className="text-xl text-gray-800 font-bold hover:text-yellow-500"
+          >
+            How To Play
+          </button>
+        </div>
+      </div>
 
       {/* How To Play Modal */}
       {showHowToPlay && (
@@ -71,4 +71,8 @@ const StarterPage: React.FC = () => {
   );
 };
 
-export default StarterPage;
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <StarterPage />
+  </StrictMode>
+);

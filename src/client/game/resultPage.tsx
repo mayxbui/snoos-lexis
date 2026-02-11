@@ -164,3 +164,5 @@ export const ResultPage: React.FC<ResultPageProps> = ({
         </div>
     );
 };
+
+export default ResultPage;

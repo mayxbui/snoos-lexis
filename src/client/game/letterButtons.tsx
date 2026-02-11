@@ -37,6 +37,7 @@ export const LetterButtons: React.FC<LetterButtonsProps> = ({ letters, selectedL
   );
 };
 
+export default LetterButtons;
 
 // // src/client/game/LetterButtons.tsx
 // import React, { useMemo } from "react";
