@@ -3,15 +3,14 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import SnoosLexisTitle from '../public/title.png';
 import PlayButton from '../public/play-button.png';
-import { navigateTo } from '@devvit/web/client';
-import GameContainer from '../game/controlButtons';
+import { requestExpandedMode } from '@devvit/web/client';
 
-const StarterPage = () => {
+const Splash = () => {
   const [showHowToPlay, setShowHowToPlay] = useState(false); // State to toggle how-to-play modal
 
-  const handlePlayClick = () => {
-    console.log("navigating to game")
-    navigateTo('/game'); // Start the game when play is clicked
+  const handlePlayClick = (e:React.MouseEvent) => {
+    console.log("navigating to game...")
+    requestExpandedMode(e.nativeEvent, 'game') 
   };
 
   const handleHowToPlayClick = () => {
@@ -73,6 +72,6 @@ const StarterPage = () => {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <StarterPage />
+    <Splash />
   </StrictMode>
 );

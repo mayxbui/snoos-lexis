@@ -1,3 +1,31 @@
+import express from 'express';
+import { InitResponse, IncrementResponse, DecrementResponse } from '../shared/types/api.ts';
+import { redis, reddit, createServer, context, getServerPort } from '@devvit/web/server';
+import { createPost } from './core/post';
+import path from 'path';
+
+const app = express();
+
+// Serve static files from the build directory (you should have your React app bundled into this folder)
+app.use(express.static(path.join(__dirname, 'build')));
+
+// Define a route to serve your splash page
+app.get('/splash', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+
+// Define a route to serve your main app page
+app.get('/game', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+
+// Any other routes can go here, but ideally your app only needs to serve the bundled React app.
+
+app.listen(3000, () => {
+  console.log('Server running on http://localhost:3000');
+});
+
+
 // import express from 'express';
 // import { InitResponse, IncrementResponse, DecrementResponse } from '../shared/types/game';
 // import { redis, reddit, createServer, context, getServerPort } from '@devvit/web/server';

@@ -11,6 +11,7 @@ import { FoundWord } from '../../shared/types/types';
  * - Player rank on leaderboard
  * - Perfect score badge (if found all words)
  * - Share to Reddit button
+ * - Only play once a day
  */
 
 interface ResultPageProps{
@@ -20,7 +21,6 @@ interface ResultPageProps{
     possibleWordsCount: number;
     playerRank?: number;
     playerUsername?: string;
-    onPlayAgain:()=>void;
     onClose:()=>void;
     leaderboard?: { username: string; rank: number; score: number }[]; // Add leaderboard prop
     dayNumber: number; // Pass the day number to the component
@@ -33,7 +33,6 @@ export const ResultPage: React.FC<ResultPageProps> = ({
     possibleWordsCount,
     playerRank,
     playerUsername = 'Player',
-    onPlayAgain,
     onClose,
     leaderboard = [],
     dayNumber, // Receive dayNumber as a prop

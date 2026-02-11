@@ -1,21 +1,14 @@
 // src/client/game/gameContainer.tsx
 import React, { useMemo, useState } from "react";
 import {LetterButtons} from "./letterButtons";
+import { ShuffleArray } from "../../shared/types/constants";
+import { wordValidation } from "../../shared/types/api";
 
 type SubmitResult = { ok: true } | { ok: false; message: string };
 
-const shuffleArray = (arr: string[]) => {
-  const copy = [...arr];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i]!, copy[j]!] = [copy[j]!, copy[i]!];
-  }
-  return copy;
-};
-
 // Example: replace with your real validator / API call
 const validateWord = async (word: string): Promise<SubmitResult> => {
-  if (word.length < 3) return { ok: false, message: "Word too short (min 3)." };
+  if (word.length < 3) return { ok: false, message: "Word has to be at least 3 letters." };
   return { ok: true };
 };
 
@@ -45,7 +38,7 @@ export default function gameContainer() {
   /** SHUFFLE: randomize the 6 available letters */
   const handleShuffle = () => {
     setStatus("");
-    setLetters((prev) => shuffleArray(prev));
+    setLetters((prev) => ShuffleArray(prev));
   };
 
   /** SUBMIT: validate and store word, then clear selection */

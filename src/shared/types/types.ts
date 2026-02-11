@@ -17,6 +17,10 @@ export interface GameState {
   score: number;                        // Total points accumulated
 }
 
+export interface FoundWord {
+  word: string;  // Add other properties as needed for the found word
+}
+
 
 export interface FoundWord {
   word: string;                         // The word (e.g., "hate")
@@ -43,7 +47,6 @@ export interface FoundWord {
  * }
  */
 
----
 
 /**
  * STREAK TYPES
@@ -68,7 +71,6 @@ export interface Streak {
  * Bonus: +3 points on next valid word
  */
 
----
 
 /**
  * GAME RESULT TYPES
@@ -104,7 +106,6 @@ export interface GameResult {
  * }
  */
 
----
 
 /**
  * LEADERBOARD TYPES
@@ -139,7 +140,7 @@ export interface LeaderboardEntry {
  * ]
  */
 
----
+
 
 /**
  * DAILY PUZZLE TYPES
@@ -175,7 +176,6 @@ export interface DailyPuzzle {
  * Precomputed once at game start using Backtracking
  */
 
----
 
 /**
  * GAME CONFIG TYPES
@@ -193,7 +193,7 @@ export interface GameConfig {
 /**
  * EXAMPLE GameConfig:
  * {
- *   gameDuration: 60,
+ *   gameDuration: 120,
  *   minWordLength: 3,
  *   maxWordLength: 6,
  *   streakWindow: 5000,
@@ -201,7 +201,6 @@ export interface GameConfig {
  * }
  */
 
----
 
 /**
  * WORD VALIDATION TYPES
@@ -241,7 +240,7 @@ export interface WordValidationResult {
  * }
  */
 
----
+ 
 
 /**
  * SCORING TYPES
@@ -273,7 +272,7 @@ export interface ScoringResult {
  * - Total: 5 + 6 + 3 = 14 points
  */
 
----
+ 
 
 /**
  * API REQUEST/RESPONSE TYPES
@@ -329,7 +328,7 @@ export interface LeaderboardResponse {
  * }
  */
 
----
+ 
 
 /**
  * LETTER FREQUENCY TYPES
@@ -354,7 +353,7 @@ export interface LetterFrequency {
  * Each letter appears once (single-use rule)
  */
 
----
+ 
 
 /**
  * TRIE NODE TYPE
@@ -383,7 +382,7 @@ export interface TrieNode {
  *                   ├─ isEndOfWord: true (end of "cather") ✓
  */
 
----
+ 
 
 /**
  * SUBMISSION RECORD TYPE
@@ -410,7 +409,7 @@ export interface SubmissionRecord {
  * ]
  */
 
----
+ 
 
 /**
  * GAME ERROR TYPES
@@ -432,7 +431,7 @@ export interface GameError {
  * }
  */
 
----
+ 
 
 /**
  * TYPE USAGE SUMMARY
@@ -459,7 +458,7 @@ export interface GameError {
  * - SubmissionRecord (streak tracking)
  */
 
----
+ 
 
 /**
  * IMPORT EXAMPLES
@@ -474,7 +473,7 @@ export interface GameError {
  * import { Streak, ScoringResult } from '@/shared/types';
  */
 
----
+ 
 
 /**
  * CREATING TYPE INSTANCES
