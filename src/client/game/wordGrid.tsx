@@ -38,6 +38,8 @@ export const WordGrid: React.FC<WordGridProps> = ({ foundWords }) => {
 };
 
 
+export default WordGrid;
+
 // import React from "react";
 // import { FoundWord } from "../../shared/types/types";
 

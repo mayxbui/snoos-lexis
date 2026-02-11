@@ -1,1 +1,0 @@
-// Check word validation hook
