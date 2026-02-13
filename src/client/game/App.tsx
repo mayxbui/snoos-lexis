@@ -1,150 +1,227 @@
-import React, { useState } from 'react';
-import WordGrid from './wordGrid';
-import LetterButtons from './letterButtons';
-import ControlButtons from './controlButtons';
-import ResultPage from './resultPage';
-import Timer from './timer';
-import SnoosLexisTitle from '../public/title.png';
-import PlayButton from '../public/play-button.png';
-import { GameState, FoundWord } from '../../shared/types/types';
+import { useState } from "react";
+import Title from "../public/title.png";
+import PlayButton from "../public/play-button.png";
 
-// Splash screen component
-const SplashScreen = ({ onPlayClick }: { onPlayClick: () => void }) => (
-  <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
-    <div className="mb-8">
-      <img src={SnoosLexisTitle} alt="Snoo's Lexis Title" className="w-72" />
+import useTimer from "../hooks/useTimer";
+import LetterButtons from "./LetterButtons";
+import Timer from "./Timer";
+import ControlButtons from "./ControlButtons";
+import ResultPage from "./ResultPage";
+import WordGrid from "./WordGrid";
+
+import { useDailyGame } from "../hooks/useDailyGame";
+import { useGameStates } from "../hooks/useGameStates";
+import { useValidation } from "../hooks/useValidation";
+import { useRedditUser } from "../hooks/useRedditUser";
+
+import type { GameState, FoundWord } from "../../shared/types/types";
+
+import "../index.css";
+import "typicons.font/src/font/typicons.css";
+
+interface StarterProps {
+  onPlay: () => void;
+  onHowTo: () => void;
+}
+
+interface GameContainerProps {
+  gameState: GameState;
+  timeLeft: number;
+  selectLetter: (letter: string) => void;
+  clearSelection: () => void;
+  addFoundWord: (wordData: FoundWord) => void;
+  validateWord: (word: string) => Promise<any>;
+  onShuffle: () => void;
+  removeLetter: (index: number) => void; 
+}
+
+const Starter = ({ onPlay, onHowTo }: StarterProps) => (
+  <div className="flex flex-col items-center justify-center h-screen">
+    <div className="absolute top-20">
+      <img src={Title} alt="Snoo'ed Title" className="w-[200px] max-w-4xl" />
     </div>
 
-    <button 
-      className="bg-transparent border-none cursor-pointer mb-8"
-      onClick={onPlayClick}
+    <button
+      onClick={onPlay}
+      className="bg-transparent border-0 cursor-pointer transition-transform duration-200 hover:scale-105"
     >
-      <img src={PlayButton} alt="Play Button" className="w-36" />
+      <img src={PlayButton} alt="Play Button" className="w-56" />
     </button>
 
-    <div className="mt-4">
-      <button 
-        onClick={onPlayClick}  // Passing onPlayClick to show modal
-        className="text-xl text-gray-800 font-bold hover:text-yellow-500"
-      >
+    <div className="mt-2">
+      <button onClick={onHowTo} className="retro-btn">
         How To Play
       </button>
     </div>
   </div>
 );
 
-const initialState: GameState = {
-  id: '12345',  // Unique game ID (can be generated or based on some logic)
-  dailyPuzzleId: '2025-02-09',  // Example date
-  letters: ['c', 'a', 't', 'h', 'e', 'r'],
-  selectedLetters: [],
-  foundWords: [],
-  timer: 120,  // Timer set to 120 seconds initially
-  isGameActive: true,
-  score: 0,
-};
+const GameContainer: React.FC<GameContainerProps> = ({
+  gameState,
+  timeLeft,
+  selectLetter,
+  clearSelection,
+  addFoundWord,
+  validateWord,
+  onShuffle,
+  removeLetter,
+}) => {
+  console.log("GameContainer - gameState:", gameState);
+  console.log("GameContainer - isActive:", gameState?.isActive);
 
-// Main game component
-const GameContainer = () => {
-  // Explicitly use the GameState type for useState
-  const [gameState, setGameState] = useState<GameState>(initialState);
+  if (!gameState) {
+    return <div className="text-center p-10">Loading game...</div>;
+  }
 
-  // Handle word selection
-  const handleSelect = (letter: string) => {
-    setGameState((prevState) => ({
-      ...prevState,
-      selectedLetters: [...prevState.selectedLetters, letter],
-    }));
-  };
-  
-  // Handle word submission
-  const handleSubmit = () => {
-    console.log('Submit word');
+  const handleSubmit = async () => {
+    const word = gameState.selectedLetters.join("").toUpperCase();
+    if (!word) return;
+    const alreadyFound = gameState.foundWords.some(
+      (w) => w.word === word
+    );
+    if (alreadyFound) {
+      clearSelection();
+      alert("word's already found.")
+      return;
+    }
+    const result = await validateWord(word);
+    if (result.valid && result.wordData) {
+      addFoundWord(result.wordData);
+    }
+    clearSelection();
   };
 
-  // Handle game result submission
-  const handleGameOver = () => {
-    console.log('Game Over');
-    setGameState((prevState) => ({
-      ...prevState,
-      isGameActive: false,
-    }));
-  };
 
   return (
-    <div className="game-container">
-      <div className="header">
-        <span className="score">{gameState.score}</span>
-      </div>
-      <WordGrid foundWords={gameState.foundWords} />
-      <LetterButtons
-        letters={gameState.letters}
-        selectedLetters={gameState.selectedLetters}
-        onSelectLetter={handleSelect}
+    <div className="flex flex-col items-center gap-6 p-6 min-h-screen">
+      <Timer
+        seconds={timeLeft}
+        isActive={gameState.isActive}
+        totalSeconds={120}
       />
-      <ControlButtons
-        onShuffle={() => {}}
-        onSubmit={handleSubmit}
-        isGameActive={gameState.isGameActive}
-      />
-      <Timer seconds={gameState.timer} isActive={gameState.isGameActive} />
-      <ResultPage
-        isOpen={!gameState.isGameActive}
-        finalScore={gameState.score}
-        foundWords={gameState.foundWords}
-        possibleWordsCount={10}
-        playerRank={0}
-        playerUsername="Player"
-        onClose={handleGameOver}
-        dayNumber={1}
-      />
+
+      {gameState.isActive ? (
+        <>
+          <WordGrid
+            selectedLetters={gameState.selectedLetters}
+            onRemoveLetter={removeLetter}
+          />
+
+          <LetterButtons
+            letters={gameState.letters}
+            selectedLetters={gameState.selectedLetters}
+            onSelectLetter={selectLetter}
+          />
+
+          <ControlButtons
+            onSubmit={handleSubmit}
+            onClear={clearSelection}
+            onShuffle={onShuffle}
+          />
+        </>
+      ) : (
+        <ResultPage
+          isOpen={!gameState.isActive}
+          playerWords={gameState.foundWords}
+          playerScore={gameState.score}
+          dayId={gameState.dailyGameId}
+        />
+      )}
     </div>
   );
 };
 
-// App Component
-const App = () => {
-  const [isGameStarted, setIsGameStarted] = useState(false);
-  const [showHowToPlay, setShowHowToPlay] = useState(false); // Manage the modal visibility
+export const App = () => {
+  const [isStarted, setIsStarted] = useState(false);
+  const [showHowToPlay, setHowToPlay] = useState(false);
 
+  const { letters, dayId, loading } = useDailyGame();
+  const { username } = useRedditUser();
 
-  // Handle play button click to start the game
-  const handlePlayClick = () => {
-    setIsGameStarted(true); // Start the game by setting the state
-  };
+  const {
+    gameState,
+    selectLetter,
+    clearSelection,
+    addFoundWord,
+    endGame,
+    shuffleLetters,
+    removeLetter,
+  } = useGameStates(letters, dayId);
 
-  // Handle showing the "How To Play" modal
-  const handleHowToPlayClick = () => {
-    setShowHowToPlay(true); // Show the modal
-  };
+  const { timeLeft } = useTimer(
+    120,
+    gameState?.isActive ?? false,
+    endGame
+  );
 
-  // Handle closing the "How To Play" modal
-  const handleCloseModal = () => {
-    setShowHowToPlay(false); // Close the modal
-  };
+  const { validateWord } = useValidation(
+    gameState?.letters || [],
+    gameState?.dailyGameId || "",
+    // username
+    "hi"
+  );
 
+  if (loading || !letters || !gameState || !username) {
+    return <div>Loading...</div>;
+  }
+  
+  if (loading || !letters || !gameState) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div>
-      {!isGameStarted ? (
-        <SplashScreen onPlayClick={handlePlayClick} />
+      {isStarted ? (
+         <GameContainer
+          gameState={gameState}
+          timeLeft={timeLeft}
+          selectLetter={selectLetter}
+          clearSelection={clearSelection}
+          addFoundWord={addFoundWord}
+          validateWord={validateWord}
+          onShuffle={shuffleLetters}
+          removeLetter={removeLetter}
+        />
+        ) :(
+          <Starter
+            onPlay={() => setIsStarted(true)}
+            onHowTo={() => setHowToPlay(true)}
+          />
+        )
+      }
+
+      {!isStarted ? (
+        <Starter
+          onPlay={() => setIsStarted(true)}
+          onHowTo={() => setHowToPlay(true)}
+        />
       ) : (
-        <GameContainer  />
+        <GameContainer
+          gameState={gameState}
+          timeLeft={timeLeft}
+          selectLetter={selectLetter}
+          clearSelection={clearSelection}
+          addFoundWord={addFoundWord}
+          validateWord={validateWord}
+          onShuffle={shuffleLetters}
+          removeLetter={removeLetter}
+        />
       )}
 
       {showHowToPlay && (
-        <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <button 
-              onClick={handleCloseModal} // Close modal on click
-              className="absolute top-2 right-2 text-xl font-bold"
+        <div className="fixed inset-0 flex justify-center items-center bg-black/50 font-[var(--font)]">
+          <div className="flex flex-col bg-[var(--color-background)] border-4 border-b-8 p-6 rounded-none shadow-lg w-96 relative text-[var(--color-text-dark)]">
+            <button
+              onClick={() => setHowToPlay(false)}
+              className="cursor-pointer absolute top-2 right-2 text-2xl"
             >
-              X
+              <span className="typcn typcn-delete"></span>
             </button>
-            <h2 className="text-2xl font-bold mb-4">How To Play</h2>
-            <p className="text-gray-700">
-              In this game, you are tasked with finding all the possible words from a unique set of letters. 
-              The more words you find, the higher your score. Try to find all the words before the timer runs out!
+            <h2 className="text-2xl font-bold mb-4">
+              How To Play
+            </h2>
+            <p>
+              Find as many valid words as possible before time runs out!
             </p>
           </div>
         </div>
@@ -152,5 +229,3 @@ const App = () => {
     </div>
   );
 };
-
-export default App;

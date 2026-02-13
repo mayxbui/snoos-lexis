@@ -7,13 +7,3 @@ export const SCRABBLE_VALUES: Record<string, number> = {
   b: 5, v: 5,
   k: 6, x: 7, q: 7, j: 7, z: 7,
 };
-
-
-export const ShuffleArray = (arr: string[]) => {
-  const copy = [...arr];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i]!, copy[j]!] = [copy[j]!, copy[i]!];
-  }
-  return copy;
-};

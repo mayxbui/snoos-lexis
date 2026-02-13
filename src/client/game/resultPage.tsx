@@ -1,167 +1,87 @@
-import React, { useState } from 'react';
-import { FoundWord } from '../../shared/types/types';
+import { useServerResults } from "../hooks/useServerResults";
+import type { FoundWord } from "../../shared/types/types";
 
-/**
- * Results Page Component
- * 
- * Displays when game is over (timer = 0)
- * Shows:
- * - Final score
- * - Words found vs possible words
- * - Player rank on leaderboard
- * - Perfect score badge (if found all words)
- * - Share to Reddit button
- * - Only play once a day
- */
-
-interface ResultPageProps{
-    isOpen: boolean;
-    finalScore: number;
-    foundWords: FoundWord[];
-    possibleWordsCount: number;
-    playerRank?: number;
-    playerUsername?: string;
-    onClose:()=>void;
-    leaderboard?: { username: string; rank: number; score: number }[]; // Add leaderboard prop
-    dayNumber: number; // Pass the day number to the component
+interface ResultPageProps {
+  isOpen: boolean;
+  playerWords: FoundWord[];
+  playerScore: number;
+  dayId: string;
 }
 
-export const ResultPage: React.FC<ResultPageProps> = ({
-    isOpen,
-    finalScore,
-    foundWords,
-    possibleWordsCount,
-    playerRank,
-    playerUsername = 'Player',
-    onClose,
-    leaderboard = [],
-    dayNumber, // Receive dayNumber as a prop
-}) => {
-    const [shareMsg, setShareMsg] = useState('');
-    const [copied, setCopied] = useState(false);
+export default function ResultPage({
+  isOpen,
+  playerWords,
+  playerScore,
+  dayId,
+}: ResultPageProps) {
+  const { data, loading } = useServerResults(dayId);
+  if (!isOpen) return null;
+  if (loading || !data) return <div>Loading Results...</div>;
 
-    if (!isOpen) return null;
+  const { wordList, leaderboard } = data;
+  const playerWordStrings = playerWords.map((w) => w.word);
 
-    const wordsFound = foundWords.length;
-    const accuracy = possibleWordsCount > 0 ? Math.round((wordsFound / possibleWordsCount) * 100) : 0;
-    const isPerfectRun = wordsFound === possibleWordsCount;
-    const longestWord = foundWords.length > 0 ? foundWords.reduceRight((prev, current) => current.length > prev.length ? current : prev) : null;
-    const pangrams = foundWords.filter((word) => word.isPangram).length;
+  return (
+    <div className="fixed inset-0 bg-[var(--color-background)] flex flex-col items-center p-10 overflow-auto">
+      <div className="bg-[var(--color-secondary)] text-[var(--color-primary)] px-8 py-4 shadow-lg rotate-[-3deg] text-3xl mb-6">
+        Game Over!
+      </div>
 
-    const generateShareText = () => {
-        const text = `Snoo's Lexis #${dayNumber}\n\n` + 
-            `Score: ${finalScore}\n` +
-            `Words: ${wordsFound}/${possibleWordsCount}\n` +
-            `Accuracy: ${accuracy}%\n` +
-            `${isPerfectRun ? '✨ Perfect Score!\n' : ''}` +
-            `${playerRank ? `Rank: #${playerRank}\n` : ''}\n` +
-            `Play at: https://reddit.com/r/snoos-lexis`;
-        setShareMsg(text);
-        return text;
-    };
+      <h2 className="text-xl mb-4">
+        You found <strong>{playerWords.length}</strong> words!
+      </h2>
 
-    const handleCopyToClipboard = async () => {
-        const text = generateShareText();
-        try {
-            await navigator.clipboard.writeText(text);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        } catch (err) {
-            console.error('Failed to copy:', err);
-        }
-    };
+      <div className="text-2xl mb-6 font-bold">
+        Your Score: {playerScore}
+      </div>
 
-    const handleShareToReddit = () => {
-        const text = generateShareText();
-        const url = `https://reddit.com/r/snoos-lexis/submit?title=Daily%20Game%20Results&text=${encodeURIComponent(text)}`;
-        window.open(url, '_blank');
-    };
+      <div className="flex gap-10 w-full max-w-5xl">
+        <div className="flex-1 border-4 border-black p-6 bg-[var(--color-background)] shadow-[8px_8px_0px_black] max-h-96 overflow-y-auto">
+          <h3 className="text-xl mb-4 font-bold">Leaderboard</h3>
 
-    return (
-        <div className="result-page-overlay">
-            <div className="results-header">
-                <h2>Snoo's Lexis #{dayNumber}</h2>
-                <p>You found <strong>{wordsFound}/{possibleWordsCount}</strong> of {possibleWordsCount} words.</p>
-            </div>
-            
-            {/* Results Tables */}
-            <div className="results-tables">
-                {/* Words Found Table */}
-                <div className="table-container">
-                    <h3>Words Found</h3>
-                    <table className="words-table">
-                        <thead>
-                            <tr>
-                                <th>Word</th>
-                                <th>Score</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {foundWords.map((word, index) => (
-                                <tr key={index}>
-                                    <td>{word.word.toUpperCase()}</td>
-                                    <td>{word.score}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Ranking Table */}
-                <div className="table-container">
-                    <h3>Player Rankings</h3>
-                    <table className="ranking-table">
-                        <thead>
-                            <tr>
-                                <th>Username</th>
-                                <th>Rank</th>
-                                <th>Score</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {leaderboard.map((player, index) => (
-                                <tr key={index}>
-                                    <td>{player.username}</td>
-                                    <td>{player.rank}</td>
-                                    <td>{player.score}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div className="results-separator"></div>
-
-            {/* Share section */}
-            <div className="results-share-section">
-                <h3>Share Your Results</h3>
-                <div className="share-text-preview">
-                    <pre>{generateShareText()}</pre>
-                </div>
-
-                <div className="share-buttons">
-                    <button
-                        className="btn btn-primary btn-share-reddit"
-                        onClick={handleShareToReddit}
-                        title="Share to Reddit"
-                        type="button"
-                    > Share to Reddit
-                    </button>
-
-                    <button
-                        className={`btn btn-secondary btn-copy ${copied ? 'copied' : ''}`}
-                        onClick={handleCopyToClipboard}
-                        title="Copy to clipboard"
-                        type="button"
-                    >{copied ? '✓ Copied!' : '📋 Copy Text'}</button>
-                </div>
-                <div className="results-footer-tip">
-                    <p>💡 Come back tomorrow for a new puzzle!</p>
-                </div>
-            </div>
+          {leaderboard.length > 0 ? (
+            leaderboard.map((entry, index) => (
+              <div 
+                key={index} 
+                className={`flex justify-between py-2 border-b border-gray-300 ${
+                  entry.username === "anonymous" ? "font-bold" : ""
+                }`}
+              >
+                <span>
+                  {entry.rank}. {entry.username}
+                </span>
+                <span className="font-bold">{entry.score}</span>
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-500">No scores yet</p>
+          )}
         </div>
-    );
-};
 
-export default ResultPage;
+        {/* Words Found */}
+        <div className="flex-1 border-4 border-black p-6 bg-[var(--color-secondary)] text-[var(--color-primary)] shadow-[8px_8px_0px_black] max-h-96 overflow-y-auto">
+          <h3 className="text-xl mb-4 font-bold">Words Found</h3>
+
+          {wordList.length > 0 ? (
+            wordList.map((word, index) => {
+              const found = playerWordStrings.includes(word);
+
+              return (
+                <div 
+                  key={index} 
+                  className="flex justify-between py-1 border-b border-opacity-20 border-white"
+                >
+                  <span>
+                    {found ? "✓" : "✕"} {word}
+                  </span>
+                </div>
+              );
+            })
+          ) : (
+            <p>No words found yet</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

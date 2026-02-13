@@ -1,201 +1,125 @@
-// src/server/core/leaderboardManager.ts
-
-import { GameResult, LeaderboardEntry } from '../../shared/types';
+import { redis } from "@devvit/web/server";
+import type { LeaderboardEntry } from "../../shared/types/types";
 
 /**
- * Leaderboard Manager
- * 
- * Data Structure: HashMap + Sort-on-Query with Caching
- * 
- * Why not Min-Heap?
- * - Heap is faster for streaming updates (O(log N))
- * - But leaderboard updates are infrequent (1 per player per day)
- * - HashMap + cached sort is simpler and sufficient
- * 
- * Complexity:
- * - Add score: O(1)
- * - Get top scores: O(N log N) first time, then O(1) cached
- * - Get rank: O(N)
- * - Get count: O(1)
+ * Add or update a player's score for the day
  */
+const DAY_TTL = 60 * 60 * 24;
 
-interface LeaderboardCache {
-  scores: LeaderboardEntry[];
-  timestamp: number;
+export async function addScore(
+  dayId: string,
+  username: string,
+  score: number
+): Promise<void> {
+  const leaderboardKey = `leaderboard:${dayId}`;
+
+  // Increment cumulative score
+  await redis.zIncrBy(leaderboardKey, username, score);
+
+  // Ensure leaderboard expires
+  await redis.expire(leaderboardKey, DAY_TTL);
+
+  // Store metadata
+  // await redis.hSet(`${leaderboardKey}:${username}`, {
+  //   wordCount: wordCount.toString(),
+  // });
+}
+export async function getTopScores(
+  dayId: string,
+  limit: number = 100
+): Promise<LeaderboardEntry[]> {
+  const leaderboardKey = `leaderboard:${dayId}`;
+
+  const members = await redis.zRange(
+    leaderboardKey,
+    -limit,
+    -1,
+  );
+
+  members.reverse();
+
+  const entries: LeaderboardEntry[] = [];
+
+  let rank = 1;
+
+  for (const { member: username, score } of members) {
+    const metadata = await redis.hGetAll(
+      `${leaderboardKey}:${username}`
+    );
+
+    entries.push({
+      rank,
+      username,
+      score: Math.round(score),
+      wordCount: parseInt(metadata.wordCount || "0"),
+    });
+
+    rank++;
+  }
+
+  return entries;
 }
 
-export class LeaderboardManager {
-  private dailyScores: Map<string, GameResult> = new Map(); // username → result
-  private cache: LeaderboardCache | null = null;
-  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-  private readonly MAX_LEADERBOARD_SIZE = 1000; // Keep top 1000
 
-  /**
-   * Add or update a player's score for the day
-   * Time: O(1)
-   */
-  addScore(username: string, result: GameResult): void {
-    // Only keep better score
-    const existing = this.dailyScores.get(username);
-    if (existing && existing.score >= result.score) {
-      return;
-    }
+/**
+ * Get player's rank instantly using Redis
+ */
+export async function getPlayerRank(
+  dayId: string,
+  username: string
+): Promise<number | null> {
+  const leaderboardKey = `leaderboard:${dayId}`;
 
-    this.dailyScores.set(username, result);
-    this.invalidateCache();
-  }
+  // Ascending rank (0 = lowest score)
+  const ascRank = await redis.zRank(leaderboardKey, username);
 
-  /**
-   * Get top N scores with caching
-   * Time: O(N log N) first call, O(1) cached
-   */
-  getTopScores(limit: number = 100): LeaderboardEntry[] {
-    const sorted = this._getSortedScores();
-    return sorted.slice(0, Math.min(limit, sorted.length));
-  }
+  if (ascRank === undefined) return null;
 
-  /**
-   * Get player's rank on leaderboard
-   * Time: O(N) if cache miss, O(1) if cached
-   */
-  getRank(username: string): number | null {
-    const sorted = this._getSortedScores();
-    const index = sorted.findIndex((entry) => entry.username === username);
-    return index >= 0 ? index + 1 : null;
-  }
+  const totalPlayers = await redis.zCard(leaderboardKey);
 
-  /**
-   * Get player's entry with rank
-   */
-  getPlayerEntry(username: string): LeaderboardEntry | null {
-    const sorted = this._getSortedScores();
-    for (let i = 0; i < sorted.length; i++) {
-      if (sorted[i].username === username) {
-        return {
-          ...sorted[i],
-          rank: i + 1,
-        };
-      }
-    }
-    return null;
-  }
+  // Convert to descending rank (1 = highest score)
+  const descRank = totalPlayers - ascRank;
 
-  /**
-   * Get leaderboard statistics
-   */
-  getStats(): {
-    totalPlayers: number;
-    highScore: number;
-    averageScore: number;
-    medianScore: number;
-  } {
-    const sorted = this._getSortedScores();
-    const scores = sorted.map((e) => e.score);
-
-    const highScore = scores[0] || 0;
-    const sum = scores.reduce((a, b) => a + b, 0);
-    const averageScore = scores.length > 0 ? Math.round(sum / scores.length) : 0;
-    const medianScore =
-      scores.length > 0
-        ? scores[Math.floor(scores.length / 2)]
-        : 0;
-
-    return {
-      totalPlayers: sorted.length,
-      highScore,
-      averageScore,
-      medianScore,
-    };
-  }
-
-  /**
-   * Export leaderboard as markdown table
-   */
-  exportAsMarkdown(limit: number = 50): string {
-    const topScores = this.getTopScores(limit);
-
-    const header = '| Rank | Username | Score | Words |';
-    const separator = '|------|----------|-------|-------|';
-    const rows = topScores
-      .map((entry) =>
-        `| ${entry.rank} | u/${entry.username} | ${entry.score} | ${entry.wordCount} |`
-      )
-      .join('\n');
-
-    return `${header}\n${separator}\n${rows}`;
-  }
-
-  /**
-   * Clear all scores
-   */
-  reset(): void {
-    this.dailyScores.clear();
-    this.invalidateCache();
-  }
-
-  /**
-   * Get total player count
-   */
-  getPlayerCount(): number {
-    return this.dailyScores.size;
-  }
-
-  /**
-   * Internal: Get sorted scores with caching
-   */
-  private _getSortedScores(): LeaderboardEntry[] {
-    const now = Date.now();
-
-    // Return cached if still valid
-    if (this.cache && now - this.cache.timestamp < this.CACHE_DURATION) {
-      return this.cache.scores;
-    }
-
-    // Sort scores
-    const sorted: LeaderboardEntry[] = Array.from(this.dailyScores.values())
-      .map((result, index) => ({
-        rank: index + 1,
-        username: result.username,
-        score: result.score,
-        wordCount: result.totalWords,
-        isPerfectRun: result.isPerfectRun,
-      }))
-      .sort((a, b) => {
-        if (b.score !== a.score) {
-          return b.score - a.score;
-        }
-        if (b.wordCount !== a.wordCount) {
-          return b.wordCount - a.wordCount;
-        }
-        return 0;
-      })
-      .slice(0, this.MAX_LEADERBOARD_SIZE)
-      .map((entry, index) => ({
-        ...entry,
-        rank: index + 1,
-      }));
-
-    this.cache = {
-      scores: sorted,
-      timestamp: now,
-    };
-
-    return sorted;
-  }
-
-  /**
-   * Internal: Invalidate cache
-   */
-  private invalidateCache(): void {
-    this.cache = null;
-  }
+  return descRank;
 }
 
-let instance: LeaderboardManager | null = null;
+/**
+ * Get player's full entry
+ */
+export async function getPlayerEntry(
+  dayId: string,
+  username: string
+): Promise<LeaderboardEntry | null> {
+  const leaderboardKey = `leaderboard:${dayId}`;
 
-export function getLeaderboardManager(): LeaderboardManager {
-  if (!instance) {
-    instance = new LeaderboardManager();
+  const score = await redis.zScore(leaderboardKey, username);
+  if (score === undefined) return null;
+
+  const metadata = await redis.hGetAll(
+    `${leaderboardKey}:${username}`
+  );
+
+  const rank = await getPlayerRank(dayId, username);
+
+  return {
+    rank: rank || 0,
+    username,
+    score: Math.round(score),
+    wordCount: parseInt(metadata.wordCount || "0"),
+  };
+}
+
+/**
+ * Reset leaderboard for a day
+ */
+export async function resetLeaderboard(dayId: string): Promise<void> {
+  const leaderboardKey = `leaderboard:${dayId}`;
+
+  const members = await redis.zRange(leaderboardKey, 0, -1);
+
+  for (const member of members) {
+    await redis.del(`${leaderboardKey}:${member}`);
   }
-  return instance;
+
+  await redis.del(leaderboardKey);
 }

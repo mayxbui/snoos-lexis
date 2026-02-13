@@ -1,40 +1,35 @@
-import React from "react";
-import { FoundWord } from "../../shared/types/types";
-
 interface WordGridProps {
-  foundWords: FoundWord[];
+  selectedLetters: string[];
+  onRemoveLetter: (index: number) => void;
 }
 
-export const WordGrid: React.FC<WordGridProps> = ({ foundWords }) => {
-  const wordsByLength = foundWords.reduce((acc, word) => {
-    if (!acc[word.length]) {
-      acc[word.length] = [];
-    }
-    acc[word.length].push(word);
-    return acc;
-  }, {} as Record<number, FoundWord[]>);
-
-  const lengths = [6, 5, 4, 3];
+export default function WordGrid({
+  selectedLetters,
+  onRemoveLetter,
+}: WordGridProps) {
+  const word = selectedLetters.join("");
 
   return (
-    <div className="word-grid">
-      {lengths.map((length) =>
-        wordsByLength[length] ? (
-          <div key={length}>
-            <h3>{length}-Letter Words</h3>
-            <ul>
-              {wordsByLength[length].map((word, index) => (
-                <li key={index}>
-                  {word.word.toUpperCase()} - {word.score} {word.isPangram && "⭐"}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null
-      )}
+    <div className="flex flex-col items-center gap-4 w-full max-w-md">
+      <div className="flex gap-2 min-h-16 bg-[var(--color-secondary)] border-4 border-black p-6 shadow-[4px_4px_0px_black] flex-wrap justify-center items-center rounded-lg">
+        {selectedLetters.length > 0 ? (
+          selectedLetters.map((letter, index) => (
+            <button
+              key={index}
+              onClick={() => onRemoveLetter(index)}
+              className="w-12 h-12 bg-[var(--color-primary)] text-white font-bold text-lg border-2 border-black rounded-lg hover:bg-red-500 hover:scale-110 transition-all cursor-pointer shadow-[2px_2px_0px_black]"
+            >
+              {letter}
+            </button>
+          ))
+        ) : (
+          <span className="text-gray-400">Click letters to form a word</span>
+        )}
+      </div>
+
+      <div className="text-lg font-bold">
+        Word: <span className="text-[var(--color-secondary)]">{word || "-"}</span>
+      </div>
     </div>
   );
-};
-
-
-export default WordGrid;
+}

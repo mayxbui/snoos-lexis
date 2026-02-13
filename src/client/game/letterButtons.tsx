@@ -1,6 +1,4 @@
-// LetterButtons.tsx
-import React, { useMemo } from "react";
-import { SCRABBLE_VALUES } from "../../shared/types/constants";
+import React from 'react';
 
 interface LetterButtonsProps {
   letters: string[];
@@ -8,20 +6,29 @@ interface LetterButtonsProps {
   onSelectLetter: (letter: string) => void;
 }
 
-export const LetterButtons: React.FC<LetterButtonsProps> = ({ letters, selectedLetters, onSelectLetter }) => {
-  const isLetterSelected = (letter: string): boolean => selectedLetters.includes(letter);
-
-  const getScrabbleValue = (letter: string): number => SCRABBLE_VALUES[letter.toLowerCase()] || 0;
-
+const LetterButtons: React.FC<LetterButtonsProps> = ({
+  letters,
+  selectedLetters,
+  onSelectLetter,
+}) => {
   return (
-    <div className="letter-buttons-container">
-      {letters.map((letter, index) => (
+    <div className="flex gap-4">
+      {letters.map(letter => (
         <button
-          key={index}
+          key={letter}
+          disabled={selectedLetters.includes(letter)}
           onClick={() => onSelectLetter(letter)}
-          disabled={isLetterSelected(letter)}
+          className={`
+                w-16 h-16 flex items-center justify-center
+                text-3xl
+                rounded-sm
+                transitional-all duration-150
+                bg-[var(--color-secondary)] text-[var(--color-text-light)]
+                shadow-md hover:scale-105 active:scale-95
+                disabled:bg-transparent disabled:text-[var(--color-text-dark)]
+            `}
         >
-          {letter.toUpperCase()} - {getScrabbleValue(letter)}
+          {letter}
         </button>
       ))}
     </div>
